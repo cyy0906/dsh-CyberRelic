@@ -1,4 +1,4 @@
-# dsh-sync-fish 交接文档（跨设备同步插件）
+# 大肥鱼CyberRelic（dsh-CyberRelic）交接文档（跨设备同步插件，原 dsh-sync-fish）
 
 > 写于摸鱼会话，交接给新会话继续。角色：蓝色大肥鱼 🐋（鲸鱼娘）。用户称「主人」。
 

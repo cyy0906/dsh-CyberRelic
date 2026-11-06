@@ -1,12 +1,12 @@
 /**
- * dsh-sync-fish —— 设置页（浏览器端）
+ * dsh-cyberrelic（大肥鱼CyberRelic）—— 设置页（浏览器端）
  *
  * client bundle 不是 ESM，是自注册脚本：
  *   window.__ModuleLoader__.load({ id: '<包名>', factory: (require) => {...} })
- * 页面挂在「设置 › 跨设备同步」，数据走宿主挂的 /api/sync-fish。
+ * 页面挂在「设置 › 大肥鱼CyberRelic」，数据走宿主挂的 /api/sync-fish。
  */
 window.__ModuleLoader__.load({
-  id: 'dsh-sync-fish',
+  id: 'dsh-cyberrelic',
   factory: (require) => {
     const React = require('react')
     const h = React.createElement
@@ -335,7 +335,7 @@ window.__ModuleLoader__.load({
         h(
           'div',
           { className: 'sf-hero' },
-          h('h2', null, '跨设备同步'),
+          h('h2', null, '大肥鱼CyberRelic'),
           h(
             'p',
             null,
@@ -653,7 +653,7 @@ window.__ModuleLoader__.load({
       apply(ctx) {
         const slots = ctx.get('slots')
         slots.inject('settings.section', () =>
-          slots.register({ name: 'settings.section', id: 'sync-fish', order: 40, label: '跨设备同步' }, () => h(Panel)),
+          slots.register({ name: 'settings.section', id: 'sync-fish', order: 40, label: '大肥鱼CyberRelic' }, () => h(Panel)),
         )
       },
     }

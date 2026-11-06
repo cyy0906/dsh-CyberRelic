@@ -1,4 +1,4 @@
-# dsh-sync-fish 🐋
+# 大肥鱼CyberRelic（dsh-CyberRelic）🐋
 
 跨设备同步 DeepSeek Harness 的**鱼记忆**（dsh-fish-memory）、**习惯**（技能目录）、**插件设置**、**任务**和**工作区列表** —— 让几台电脑和手机上的 DSH Go 里，同一个鱼记得同样的事。
 
@@ -13,7 +13,7 @@
 
 ## 设置页
 
-装好并重启 DSH 后，打开 **设置 → 跨设备同步**，一页里能改完所有东西：
+装好并重启 DSH 后，打开 **设置 → 大肥鱼CyberRelic**，一页里能改完所有东西：
 
 | 区块 | 内容 |
 | --- | --- |
@@ -100,6 +100,9 @@ sync_setup channel=folder root="D:\\Sync\\dsh" deviceName="手机"
 
 ## 通道里长什么样
 
+远程目录名（`remotePrefix`）保持旧的 `dsh-sync-fish`，这样改名后老设备、老快照还能直接续上；
+改名只影响插件显示名和包名，不影响已经同步出去的数据。
+
 ```
 <通道根>/dsh-sync-fish/
   manifest.json               # 各设备最后活跃时间、记忆/文件条数
@@ -126,7 +129,7 @@ DSH Go 的远程模式连的是电脑上的宿主，插件装在电脑侧即可�
 1. 手机上打开「开发者选项 → USB 调试」，插上 USB，弹窗点「允许」
 2. 电脑上（设置页「手机」区块点一键装，或让 agent 调 `sync_phone`）
 3. 插件会：打包 → `adb push` 到 `/sdcard/Download/` → 启动 App → 在 App 会话里让手机上的 agent
-   解压到 `/root/.dsh/plugins/dsh-sync-fish`、`plugin_manager install_bundle`、把配置写到
+   解压到 `/root/.dsh/plugins/dsh-CyberRelic`、`plugin_manager install_bundle`、把配置写到
    `/root/.dsh/sync-fish/config.json`、重载插件并跑第一轮
 4. 成功判据：云端 `manifest.json` 里出现手机那台设备（名字默认「手机」）
 

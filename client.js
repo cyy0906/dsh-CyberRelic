@@ -171,7 +171,7 @@ window.__ModuleLoader__.load({
         })
       }, [])
 
-      const refresh = useCallback(async () => {
+      const refresh = useCallback(async (options = {}) => {
         diag('refresh:start')
         // 老版本 Chromium 没有 AbortSignal.timeout，用 AbortController 兜底
         const controller = typeof AbortController === 'function' ? new AbortController() : null
@@ -192,7 +192,7 @@ window.__ModuleLoader__.load({
           })
           applyStatus(data.status)
           diag('status:applied')
-          setNotice('')
+          if (!options.quiet) setNotice('')
         } catch (error) {
           console.error('[sync-fish] 读状态失败', error)
           diag('status:error', { message: String(error && error.message).slice(0, 200) })
@@ -205,6 +205,15 @@ window.__ModuleLoader__.load({
       useEffect(() => {
         diag('mount')
         void refresh()
+      }, [refresh])
+
+      // 每 15 秒悄悄刷一次状态：插上手机后卡片不用手动刷新就能看到「已连接」。
+      useEffect(() => {
+        const timer = setInterval(() => {
+          if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return
+          void refresh({ quiet: true })
+        }, 15_000)
+        return () => clearInterval(timer)
       }, [refresh])
 
       useEffect(() => {

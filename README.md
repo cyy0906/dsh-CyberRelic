@@ -11,6 +11,19 @@
 - 文件做**三方合并**：两台机都改了同一个文件 → 保留本地，远端另存成冲突副本
 - 触发：启动后 8 秒 / 定时（默认 30 分钟）/ 新会话创建后去抖 120 秒 / 手动 `sync_now`
 
+## 安装
+
+从 GitHub 直接装：
+
+```powershell
+dsh plugin add github:cyy0906/dsh-CyberRelic
+```
+
+或者把发布包 `dsh-CyberRelic-0.2.2.zip` 解压到任意目录，用 `plugin_manager` 的
+`install_bundle` 指向那个目录。装完重启 DSH（客户端设置页要等宿主重新加载 bundle 才出现）。
+
+> 这是非官方插件，只通过 DSH 自带的扩展点工作，不包含 DSH 本体或商标素材。
+
 ## 设置页
 
 装好并重启 DSH 后，打开 **设置 → 大肥鱼CyberRelic**，一页里能改完所有东西：

@@ -19,7 +19,7 @@
 dsh plugin add github:cyy0906/dsh-CyberRelic
 ```
 
-或者把发布包 `dsh-CyberRelic-0.2.2.zip` 解压到任意目录，用 `plugin_manager` 的
+或者把发布包 `dsh-CyberRelic-0.2.3.zip` 解压到任意目录，用 `plugin_manager` 的
 `install_bundle` 指向那个目录。装完重启 DSH（客户端设置页要等宿主重新加载 bundle 才出现）。
 
 > 这是非官方插件，只通过 DSH 自带的扩展点工作，不包含 DSH 本体或商标素材。

@@ -2,9 +2,12 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { gunzipSync } from 'node:zlib'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
 import { buildTargets, keyAllowedByTargets, mergeWorkspaceRegistries } from '../lib/files.js'
-import { defaultConfig, validateConfig } from '../lib/config.js'
+import { defaultConfig, loadConfig, saveConfig, validateConfig } from '../lib/config.js'
 import { collectBundleFiles, makeTarGz, phoneConfig } from '../lib/phone.js'
 
 test('默认分类：记忆/习惯/插件设置/任务开，工作区关', () => {
@@ -92,4 +95,31 @@ test('手机安装包是 gzip，里面有 package.json', () => {
   assert.equal(archive[1], 0x8b)
   const tar = gunzipSync(archive)
   assert.ok(tar.includes(Buffer.from('package.json')))
+})
+
+test('通道字段两头的空白会被去掉（密码多一个空格就会 401）', () => {
+  const home = mkdtempSync(join(tmpdir(), 'cr-cfg-'))
+  const prev = process.env.DSH_HOME
+  process.env.DSH_HOME = home
+  try {
+    saveConfig({
+      ...defaultConfig(),
+      channel: {
+        type: 'webdav',
+        url: '  https://dav.jianguoyun.com/dav/  ',
+        username: ' 594240637@qq.com ',
+        password: ' a4a7v7yrp72u3euc ',
+        prefix: '  sub ',
+      },
+    })
+    const loaded = loadConfig()
+    assert.equal(loaded.channel.url, 'https://dav.jianguoyun.com/dav/')
+    assert.equal(loaded.channel.username, '594240637@qq.com')
+    assert.equal(loaded.channel.password, 'a4a7v7yrp72u3euc')
+    assert.equal(loaded.channel.prefix, 'sub')
+  } finally {
+    if (prev === undefined) delete process.env.DSH_HOME
+    else process.env.DSH_HOME = prev
+    rmSync(home, { recursive: true, force: true })
+  }
 })

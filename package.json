@@ -1,6 +1,6 @@
 {
   "name": "dsh-cyberrelic",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Cross-device sync for DeepSeek Harness: fish memory (dsh-fish-memory), skills, plugin settings and tasks. Folder + WebDAV channels, optional passphrase encryption (AES-256-GCM), record-level last-writer-wins merge with tombstones and conflict copies, settings page, and one-click install to DSH Go over USB.",
   "type": "module",
   "main": "lib/index.js",

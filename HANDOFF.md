@@ -182,3 +182,17 @@
 - 现有社区同步插件（可借鉴，不重造）：`@weibaohui/dsh-sync`（Git/WebDAV/本地文件夹，技能/会话/设置/插件清单）、`dsh-plugin-dsh-sync`（局域网 P2P）、`dsh-sync-webdav`、`dsh-config-manager`
 - 记忆插件备选：`dsh-mnemon`（全局/按工作区存储 + 内置 Git 同步 + 自动间隔）、`dsh-plugin-memory`（markdown+git，可迁移）
 - DSH Go：https://github.com/ccch1mneyyy/dsh-go （本机运行 PRoot Ubuntu / 远程 SSH、DSHarness Remote）
+
+## v0.2.6（2026-11-07 凌晨）手机一键装的两个修复
+
+1. **不再依赖点输入框**：改用 Android 分享入口
+   `am start -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT "<指令>" -n io.github.ccch1mneyyy.dsh_app/.share.ShareActivity`
+   —— App 会新开一个对话并把指令预填进输入框、自动弹键盘；随后点一次发送箭头即可。
+   之前 App 停在「插件详情」等页面时，点底部输入框永远点不中，会连续失败。
+   指令按原样传，空格不再替换成 `%s`。
+2. **设置页手机卡片不再误报「没看到手机」**：`buildStatusSafe().phone` 原来只有 `{adbPath, deviceName}`，
+   而 `client.js` 读的是 `phone.adb.devices`；现在返回 `{...phoneInfo(), adbPath, deviceName}`，
+   并给面板加了每 15 秒的静默刷新。
+
+验证：ShareActivity 送指令后约 30 秒完成安装 + 首轮同步（手机 13 条记忆 / 60 文件）。
+注意：每次安装会在手机上**新开一个对话**，旧对话可以手动删。

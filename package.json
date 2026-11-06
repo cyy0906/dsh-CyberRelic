@@ -1,0 +1,51 @@
+{
+  "name": "dsh-sync-fish",
+  "version": "0.2.0",
+  "description": "Cross-device sync for DeepSeek Harness: fish memory (dsh-fish-memory), skills, plugin settings and tasks. Folder + WebDAV channels, optional passphrase encryption (AES-256-GCM), record-level last-writer-wins merge with tombstones and conflict copies, settings page, and one-click install to DSH Go over USB.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/",
+    "locale/",
+    "cordis.patch.yml",
+    "client.js",
+    "README.md"
+  ],
+  "scripts": {
+    "check": "node --check lib/index.js && node --check client.js",
+    "test": "node --test test/sync.test.js test/plugin.test.js test/util.test.js test/config.test.js"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-settings-plugins"
+      ]
+    }
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "dsh-plugin",
+    "sync",
+    "webdav",
+    "memory"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20",
+    "dsh": ">=0.2.1-rc.2"
+  }
+}

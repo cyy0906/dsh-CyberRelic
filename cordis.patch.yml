@@ -1,0 +1,14 @@
+# dsh-sync-fish —— 跨设备同步（记忆 / 技能 / 设置）
+#
+# 一条主机行完成全部能力：注册 sync_* 工具 + 启动/定时/新会话触发同步。
+# 配置有三种来源（后者覆盖前者）：
+#   1. 内置默认值（只读）
+#   2. $DSH_HOME/sync-fish/config.json（由 sync_setup 工具写入）
+#   3. 下面这一行的 config（写成 {} 就只读文件配置）
+#
+# 首次使用：让 agent 调 `sync_setup` 选通道（folder/webdav）并测试连通；
+# 之后 `sync_now` 手动跑一轮，`sync_status` / `sync_conflicts` 看状态和冲突。
+- insert:
+    - id: sync-fish
+      name: 'dsh-sync-fish'
+      config: {}

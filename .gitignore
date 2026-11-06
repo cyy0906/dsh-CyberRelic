@@ -1,0 +1,9 @@
+node_modules/
+test/tmp/
+_scratch/
+*.log
+*.zip
+*.tar.gz
+*.tgz
+.DS_Store
+Thumbs.db

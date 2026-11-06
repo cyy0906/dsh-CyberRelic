@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Cross-device Sync (dsh-sync-fish)",
+    "description": "Cross-device sync for fish memory, skills and settings. Folder or WebDAV channel, optional passphrase encryption, per-record merge with conflict copies."
+  }
+}

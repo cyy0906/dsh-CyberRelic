@@ -47,5 +47,13 @@
   "engines": {
     "node": ">=20",
     "dsh": ">=0.2.1-rc.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cyy0906/dsh-CyberRelic.git"
+  },
+  "homepage": "https://github.com/cyy0906/dsh-CyberRelic#readme",
+  "bugs": {
+    "url": "https://github.com/cyy0906/dsh-CyberRelic/issues"
   }
 }

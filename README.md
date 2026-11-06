@@ -157,3 +157,13 @@ node --test test/sync.test.js test/plugin.test.js test/util.test.js test/config.
 ```
 
 测试用两个临时目录模拟两台机（切换 `DSH_HOME`），不碰真实数据；手机安装包的 tar 也在测试里验证。
+
+## 兼容、归属与许可
+
+- 本项目是独立实现，代码原创，以 **MIT** 发布；不包含、也不重新分发任何第三方插件的代码。
+- 它通过**读取和写入数据文件**与 dsh-fish-memory 互操作（同一套 store 结构、遵守 `purgeEpoch` 守卫），
+  这样鱼记忆才能跨设备合并。感谢 dsh-fish-memory 的作者 **Yuuyuko-uu** 做的插件和清楚的许可说明。
+- 设置页用的是 DSH 自带的扩展点（`__ModuleLoader__` + `settings.section` 槽位、宿主 `webServer` 路由），
+  没有修改宿主文件。
+- 安装包里不包含 DSH 本体、DeepSeek 的商标素材或别人的文档；插件名只用来描述「兼容 DeepSeek Harness」，
+  不代表官方或与官方有关联。

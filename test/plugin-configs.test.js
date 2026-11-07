@@ -87,3 +87,11 @@ test('mergePluginConfigs：首次见到远端 entry 时保留本机值，只记�
     remote: { model: 'deepseek-pro' },
   })
 })
+
+test('mergePluginConfigs：本机没装的插件（远端独有）不纳入，也不留基线', () => {
+  const local = { web: { name: 'web', config: {} } }
+  const remotes = { web: { name: 'web', config: {} }, ghost: { name: 'ghost', config: { a: 1 } } }
+  const merged = mergePluginConfigs({ local, base: {}, remotes })
+  assert.deepEqual(Object.keys(merged.merged), ['web'])
+  assert.equal(merged.nextBase.ghost, undefined)
+})

@@ -130,6 +130,7 @@ window.__ModuleLoader__.load({
       const [busy, setBusy] = useState('')
       const [notice, setNotice] = useState('')
       const [job, setJob] = useState(null)
+      const [update, setUpdate] = useState(null)
 
       const applyStatus = useCallback((data) => {
         diag('apply:enter', { hasData: Boolean(data), hasConfig: Boolean(data && data.config) })
@@ -211,6 +212,20 @@ window.__ModuleLoader__.load({
           if (timer) clearTimeout(timer)
         }
       }, [applyStatus])
+
+      const checkUpdates = useCallback(async () => {
+        setBusy('update')
+        setUpdate(null)
+        try {
+          const res = await fetch(`${API}/update`, { credentials: 'same-origin', cache: 'no-store' })
+          const data = await res.json()
+          setUpdate(data)
+        } catch (error) {
+          setUpdate({ ok: false, error: String(error.message || error) })
+        } finally {
+          setBusy('')
+        }
+      }, [])
 
       useEffect(() => {
         diag('mount')
@@ -413,6 +428,35 @@ window.__ModuleLoader__.load({
               ? h('button', { className: 'sf-btn danger', onClick: clearConflicts }, '清空冲突记录')
               : null,
           ),
+        ),
+
+        h(
+          'div',
+          { className: 'sf-card' },
+          h('h3', null, '版本', h('small', null, '检查 GitHub 上有没有新版本')),
+          h(
+            'div',
+            { className: 'sf-row' },
+            h('span', null, `当前版本：v${status?.version || '-'}`),
+            h(
+              'button',
+              { className: 'sf-btn', disabled: busy === 'update', onClick: checkUpdates },
+              busy === 'update' ? '检查中…' : '检查更新',
+            ),
+          ),
+          update
+            ? update.ok
+              ? update.hasUpdate
+                ? h(
+                    'p',
+                    { className: 'sf-note' },
+                    `发现新版本 v${update.latest}（${(update.publishedAt || '').slice(0, 10)}）　`,
+                    h('a', { href: update.url, target: '_blank', rel: 'noreferrer' }, '打开 Release 页面'),
+                  )
+                : h('p', { className: 'sf-note' }, `已是最新版本（v${update.current || status?.version}）`)
+              : h('p', { className: 'sf-note sf-err' }, `检查失败：${update.error || '未知错误'}`)
+            : null,
+          h('p', { className: 'sf-note' }, '更新方式：下载 Release 里的包解压覆盖，或 dsh plugin add github:cyy0906/dsh-CyberRelic；改完重启 DSH。'),
         ),
 
         h(

@@ -235,4 +235,10 @@
 - 本机实测免费链路：约 37KB mp3；手机实测点「读最新回复」后 **2 秒内** 创建 MediaPlayer（免费源比 Azure 快得多）。
 - 手机 0.3.2 一键装 job 成功（`2026-11-07T07:55:37Z` 同步），两个朗读胶囊正常。
 
+## v0.3.3 检查更新（2026-11-07 傍晚）
 
+- 设置页新增「版本」卡片：显示当前版本（宿主注入 status.version），按钮「检查更新」调用 `GET /api/sync-fish/update`。
+- `lib/update.js`：`parseVersion` / `compareVersions` / `checkUpdate`（读 GitHub `releases/latest`，12 秒超时；404、限流、网络错误都作为 error 返回，不抛）。
+- 接口返回 `{ok,current,latest,hasUpdate,url,publishedAt,name,notes}`；有新版时面板给 Release 链接。
+- 测试新增 `test/update.test.js`（5 例：版本解析、比较、发现新版、同版本、404/网络错误），全套 **34 pass**。
+- 已知：仓库 Release 还停在 v0.2.8（git 暂停推送），所以本机现在点「检查更新」会显示「已是最新（v0.3.3）」。

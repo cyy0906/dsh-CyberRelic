@@ -46,11 +46,12 @@ dsh plugin add github:cyy0906/dsh-CyberRelic
 | 记忆 | `~/.dsh/fish-memory/*.json` → 全局库 `~/.dsh/sync-fish/memory/global.json` | 开 |
 | 习惯 | `~/.dsh/skills/**` | 开 |
 | 插件设置 | `~/.dsh/*-config.json`、`~/.dsh/tts-bridge.json` | 开 |
+| 插件配置 | 各插件在 cordis 里的设置（`configEditor` 读取），按 entry + key 三方合并 | 开 |
 | 任务 | `~/.dsh/storages/schedule.json` | 开 |
 | 工作区 | `~/.dsh/storages/workspace.json`（只合并列表，不带会话） | 关 |
 | 额外 | 配置里的 `extraTargets`（`file` / `tree` / `glob`） | — |
 
-`.credentials.yaml` 这类凭据文件永远不同步。
+`.credentials.yaml` 这类凭据文件永远不同步。插件配置里的机器相关/机密键（`pythonPath`、`adbPath`、`workspace`、`password`、`secret`、`token`、`apiKey`…）也不会跨机搬运。
 
 ## 为什么记忆要「全局库 + 注入」
 

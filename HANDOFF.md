@@ -196,3 +196,16 @@
 
 验证：ShareActivity 送指令后约 30 秒完成安装 + 首轮同步（手机 13 条记忆 / 60 文件）。
 注意：每次安装会在手机上**新开一个对话**，旧对话可以手动删。
+
+## v0.2.9 插件配置同步（pluginConfigs，2026-11-07 下午）
+
+新增一个分类开关「插件配置（cordis）」，默认开：
+- 数据源是宿主的 `configEditor`：`configuration()` 拿每个 entry 的 `override`，`edit(entry, fn)` 写回。
+- 合并粒度是 **entry + 顶层 key** 的三方合并（base 存 `state.base.pluginConfigs`）：
+  一边改取那一边；两边改成不同值就保留本机并记一条 `pluginConfig` 冲突；其余键照常同步。
+- `DENY_KEY` 黑名单里的键（`pythonPath`、`adbPath`、`workspace`、`cwd`、`password`、`secret`、`token`、`apiKey`…）
+  不参与同步；写回前用 `restoreDenied()` 把它们从本机原配置补回去，避免抹掉。
+- 跳过本插件自己的 entry（`sync-fish` / `cyberrelic`），WebDAV 口令不会进快照。
+- 实测：本机 215 个 entry，首轮只建 base（`applied: 0`），不改任何插件。
+- 手机端还是 0.2.8，需要下一次「一键装」后其快照才带 pluginConfigs，桌面端才能拉到手机的设置。
+

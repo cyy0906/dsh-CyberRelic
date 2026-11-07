@@ -68,7 +68,8 @@ window.__ModuleLoader__.load({
     const SCOPES = [
       ['memory', '记忆', '鱼记忆的全局库，跟着账号走'],
       ['skills', '习惯 / 技能', '~/.dsh/skills 下的技能文件'],
-      ['plugins', '插件设置', '其它插件的 *-config.json'],
+      ['plugins', '插件设置文件', '其它插件的 *-config.json / tts-bridge.json'],
+      ['pluginConfigs', '插件配置（cordis）', '各插件在 cordis 里的设置，按 key 合并；路径和密钥不同步'],
       ['tasks', '任务', '定时任务的 schedule.json'],
       ['workspaces', '工作区', '工作区列表（路径和会话不跨机，默认关）'],
     ]

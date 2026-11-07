@@ -16,6 +16,11 @@ test('sanitizeConfig 去掉机器相关与机密的键', () => {
   assert.equal(input.nested.keep, 1)
 })
 
+test('sanitizeConfig 去掉 provider（设备各自可用的模型渠道不同）', () => {
+  const out = sanitizeConfig({ provider: 'deepseek-account', model: 'deepseek-flash' })
+  assert.deepEqual(out, { model: 'deepseek-flash' })
+})
+
 test('mergeValue：只有一边改的 key 会被带过来', () => {
   const base = { a: 1, b: 2, c: { d: 3 } }
   const local = { a: 9, b: 2, c: { d: 3 } }

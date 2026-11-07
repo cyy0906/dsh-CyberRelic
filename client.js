@@ -158,6 +158,14 @@ window.__ModuleLoader__.load({
             debounceSeconds: config.debounceSeconds ?? 120,
             phoneName: config.phone?.deviceName || '手机',
             adbPath: config.phone?.adbPath || '',
+            ttsEnabled: config.tts?.enabled !== false,
+            hasKey: Boolean(config.tts?.hasKey),
+            azureKey: '',
+            azureRegion: config.tts?.azureRegion || 'eastasia',
+            ttsVoice: config.tts?.voice || 'zh-CN-XiaoshuangMultilingualNeural',
+            ttsRate: config.tts?.rate || '+0%',
+            ttsPitch: config.tts?.pitch || '+0Hz',
+            ttsMaxChars: config.tts?.maxChars ?? 400,
           }
           if (!previous) return base
           // 只同步「从宿主来的」字段，别把用户正在输入的内容冲掉
@@ -263,7 +271,17 @@ window.__ModuleLoader__.load({
               scopes: form.scopes,
               channel,
               phone: { deviceName: form.phoneName, adbPath: form.adbPath },
+              tts: {
+                enabled: form.ttsEnabled,
+                azureRegion: form.azureRegion,
+                voice: form.ttsVoice,
+                rate: form.ttsRate,
+                pitch: form.ttsPitch,
+                maxChars: Number(form.ttsMaxChars) || 400,
+                clearKey: false,
+              },
             }
+            if (form.azureKey) patch.tts.azureKey = form.azureKey
             if (form.passphrase) patch.passphrase = form.passphrase
             const data = await jpost('/config', patch)
             applyStatus(data.status)
@@ -592,6 +610,99 @@ window.__ModuleLoader__.load({
                   },
                 },
                 '关闭加密',
+              )
+            : null,
+        ),
+
+        h(
+          'div',
+          { className: 'sf-card' },
+          h('h3', null, '朗读', h('small', null, '手机一键装时顺带安装；Azure 语音')),
+          h(Toggle, {
+            label: '启用朗读',
+            checked: form.ttsEnabled,
+            onChange: (value) => setForm({ ...form, ttsEnabled: value }),
+          }),
+          h(
+            Field,
+            { label: 'Azure Key' },
+            h('input', {
+              className: 'sf-input',
+              type: 'password',
+              value: form.azureKey,
+              placeholder: form.hasKey ? '已保存，留空不修改' : '语音服务的 KEY 1',
+              onChange: (event) => setForm({ ...form, azureKey: event.target.value }),
+            }),
+          ),
+          h(
+            Field,
+            { label: '区域' },
+            h('input', {
+              className: 'sf-input',
+              value: form.azureRegion,
+              placeholder: 'eastasia',
+              onChange: (event) => setForm({ ...form, azureRegion: event.target.value }),
+            }),
+          ),
+          h(
+            Field,
+            { label: '音色' },
+            h('input', {
+              className: 'sf-input',
+              value: form.ttsVoice,
+              onChange: (event) => setForm({ ...form, ttsVoice: event.target.value }),
+            }),
+          ),
+          h(
+            Field,
+            { label: '语速 / 音高' },
+            h('input', {
+              className: 'sf-input',
+              value: form.ttsRate,
+              placeholder: '+0%',
+              onChange: (event) => setForm({ ...form, ttsRate: event.target.value }),
+            }),
+            h('input', {
+              className: 'sf-input',
+              value: form.ttsPitch,
+              placeholder: '+0Hz',
+              onChange: (event) => setForm({ ...form, ttsPitch: event.target.value }),
+            }),
+          ),
+          h(
+            Field,
+            { label: '每次最多' },
+            h('input', {
+              className: 'sf-input',
+              type: 'number',
+              min: 80,
+              max: 600,
+              value: form.ttsMaxChars,
+              onChange: (event) => setForm({ ...form, ttsMaxChars: event.target.value }),
+            }),
+            '字（合成约 20 秒内）',
+          ),
+          h(
+            'p',
+            { className: 'sf-note' },
+            '手机端会装 local-tts：长按回复「朗读」、输入框上方「朗读输入框 / 读最新回复」。dsh-go 协议不允许无点按自动触发，所以是点一下读一条。',
+          ),
+          form.hasKey
+            ? h(
+                'button',
+                {
+                  className: 'sf-btn danger',
+                  onClick: async () => {
+                    try {
+                      const data = await jpost('/config', { tts: { clearKey: true } })
+                      applyStatus(data.status)
+                      setNotice('已清掉 Azure Key')
+                    } catch (error) {
+                      setNotice(`清 Key 失败：${error.message}`)
+                    }
+                  },
+                },
+                '清掉 Key',
               )
             : null,
         ),

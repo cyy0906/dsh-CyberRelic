@@ -144,13 +144,32 @@ DSH Go 的远程模式连的是电脑上的宿主，插件装在电脑侧即可�
 2. 电脑上（设置页「手机」区块点一键装，或让 agent 调 `sync_phone`）
 3. 插件会：打包 → `adb push` 到 `/sdcard/Download/` → 启动 App → 在 App 会话里让手机上的 agent
    解压到 `/root/.dsh/plugins/dsh-CyberRelic`、`plugin_manager install_bundle`、把配置写到
-   `/root/.dsh/sync-fish/config.json`、重载插件并跑第一轮
+   `/root/.dsh/sync-fish/config.json`、重载插件并跑第一轮；如果设置里开了朗读，还会顺带装好手机朗读插件
 4. 成功判据：云端 `manifest.json` 里出现手机那台设备（名字默认「手机」）
 
 前提：电脑侧通道必须是 **WebDAV**（folder 路径对手机没意义），并且 `adb` 能在 PATH 或设置里指定的位置找到
 （Windows 默认会找 `C:\Users\<你>\dsh-tools\platform-tools\adb.exe`、`%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe`）。
 
 手机上源码是 `file:` 链接，改了文件要关掉再打开 `include:sync-fish` 才会重新加载（Node 的 ESM 缓存不随文件变化失效）。
+
+## 朗读（随手机安装一起带上）
+
+从 0.3.0 起，手机一键装会顺带把朗读插件推到 `/root/.dsh/dsh-go/plugins/local-tts`，
+并执行 `dsh plugin --profile web add`；装好后输入框上方会出现两个胶囊：
+
+- **读最新回复** —— 一次点按，读最近一条助手回复（不用长按）
+- **朗读输入框** —— 读你正在打的字
+
+长按任意回复，菜单底部也有「朗读」。
+
+音色走 Azure 语音（默认 `zh-CN-XiaoshuangMultilingualNeural`，晓爽），在设置页「朗读」卡片里填
+Azure Key 与区域；不填 Key 时点朗读只会提示「还没配置 Azure key」。
+
+为什么不能「全自动」：dsh-go 的插件协议把「无点按自动触发」列为永不开放的能力，
+所以每次朗读都必须由你点一下。
+
+每次最多读 400 字（免费层合成 400 字约 20 秒，再长会撞上 App 的 30 秒媒体超时）；
+音色、语速、音高、字数都能在设置页改，保存后重新点一次「一键装」推给手机。
 
 ## 安卓上的定时同步
 

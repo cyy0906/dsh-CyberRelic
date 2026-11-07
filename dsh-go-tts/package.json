@@ -1,0 +1,74 @@
+{
+  "name": "local-tts",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "engines": {
+    "dsh": ">=0.2.1-rc.2 <0.3.0-0"
+  },
+  "dshGo": {
+    "v": 1,
+    "title": {
+      "zh": "朗读",
+      "en": "Read aloud"
+    },
+    "icon": "speaker",
+    "wants": [
+      "message",
+      "draft"
+    ],
+    "capabilities": [
+      "audio"
+    ],
+    "contributes": {
+      "composer.actions": [
+        {
+          "id": "read-latest",
+          "label": {
+            "zh": "读最新回复",
+            "en": "Read last"
+          },
+          "icon": "speaker",
+          "requires": [
+            "audio"
+          ]
+        },
+        {
+          "id": "read-draft",
+          "label": {
+            "zh": "朗读输入框",
+            "en": "Read draft"
+          },
+          "icon": "speaker",
+          "requires": [
+            "audio"
+          ]
+        }
+      ],
+      "message.actions": [
+        {
+          "id": "read-message",
+          "label": {
+            "zh": "朗读",
+            "en": "Read aloud"
+          },
+          "icon": "speaker",
+          "requires": [
+            "audio"
+          ]
+        }
+      ],
+      "media": [
+        {
+          "id": "speech"
+        }
+      ]
+    }
+  }
+}

@@ -209,3 +209,17 @@
 - 实测：本机 215 个 entry，首轮只建 base（`applied: 0`），不改任何插件。
 - 手机端还是 0.2.8，需要下一次「一键装」后其快照才带 pluginConfigs，桌面端才能拉到手机的设置。
 
+## v0.3.0 朗读整合（2026-11-07 下午）
+
+- 新增 `dsh-go-tts/`：手机端 dsh-go 朗读插件源码（composer.actions `read-latest` / `read-draft`、
+  message.actions `read-message`、media `speech`），随主包分发，不再单独维护 `local-tts` 仓库。
+- `lib/phone.js`：开启朗读时一键装会额外打包并推送 `local-tts.tar.gz`，让手机 agent
+  `dsh plugin --profile web add /root/.dsh/dsh-go/plugins/local-tts`；配置里带 key/区域/音色/语速。
+- 设置页新增「朗读」卡片：启用开关、Azure Key、区域、音色、语速、音高、每次最多字数。
+- `read-latest` 直接读本机 DSH 会话日志（`~/.dsh/sessions/**/session.v4.jsonl.zstd`，多帧 zstd 逐帧解），
+  取最后一条 `assistant/message`；上限 400 字（免费层合成 400 字约 20 秒，更长会撞 30 秒媒体超时）。
+- 真机验证（2026-11-07）：手机装 0.3.0 成功，`local-tts` 装好，两个胶囊都出现；
+  `sync_now` 240 项插件配置、写回 4 项，只有一条 `agent-default-model.provider` 冲突（保留本机）。
+- 协议限制：dsh-go 明确把「无点按自动触发」列为永不开放，所以只能做成「点一下读」。
+
+

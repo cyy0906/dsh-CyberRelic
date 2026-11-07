@@ -1,4 +1,4 @@
-﻿import test from 'node:test'
+import test from 'node:test'
 import assert from 'node:assert/strict'
 import { mergePluginConfigs, sanitizeConfig, mergeValue, restoreDenied } from '../lib/plugin-configs.js'
 
@@ -65,4 +65,25 @@ test('restoreDenied：写回前把本机的路径/密码补回来', () => {
   const sanitized = { enabled: false, nested: { a: 2 } }
   const next = restoreDenied(sanitized, raw)
   assert.deepEqual(next, { enabled: false, pythonPath: 'C:\\py\\python.exe', nested: { a: 2, workspace: 'D:\\w' } })
+})
+
+test('mergePluginConfigs：远端没变时不会把本机改过的值顶回去（不来回翻）', () => {
+  const base = { web: { local: { searchProvider: 'modsearch' }, remote: { searchProvider: 'modsearch' } } }
+  const local = { web: { name: 'web', config: { searchProvider: 'serper' } } }
+  const remotes = { web: { name: 'web', config: { searchProvider: 'modsearch' } } }
+  const merged = mergePluginConfigs({ local, base, remotes })
+  assert.equal(merged.merged.web.config.searchProvider, 'serper')
+  assert.equal(merged.changes.length, 0)
+  assert.deepEqual(merged.nextBase.web.remote, { searchProvider: 'modsearch' })
+})
+
+test('mergePluginConfigs：首次见到远端 entry 时保留本机值，只记基线', () => {
+  const local = { 'agent-default-model': { name: 'agent-default-model', config: { model: 'deepseek-flash' } } }
+  const remotes = { 'agent-default-model': { name: 'agent-default-model', config: { model: 'deepseek-pro' } } }
+  const merged = mergePluginConfigs({ local, base: {}, remotes })
+  assert.equal(merged.merged['agent-default-model'].config.model, 'deepseek-flash')
+  assert.deepEqual(merged.nextBase['agent-default-model'], {
+    local: { model: 'deepseek-flash' },
+    remote: { model: 'deepseek-pro' },
+  })
 })

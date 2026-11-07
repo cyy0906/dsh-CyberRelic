@@ -222,4 +222,17 @@
   `sync_now` 240 项插件配置、写回 4 项，只有一条 `agent-default-model.provider` 冲突（保留本机）。
 - 协议限制：dsh-go 明确把「无点按自动触发」列为永不开放，所以只能做成「点一下读」。
 
+## v0.3.2 免费朗读兜底（2026-11-07 傍晚）
+
+- 用户要求：设置里保留 Azure Key 输入框与音色选择，但**没有 Key 时用免费兜底**。
+- 免费音源：Edge 的 `speech.platform.bing.com` 已 403（带 Sec-MS-GEC 也不放行），改用
+  百度翻译朗读 `GET https://fanyi.baidu.com/gettts?lan=zh&text=…&spd=…&per=4&source=web`
+  （带 UA 与 `Referer: https://fanyi.baidu.com/`），返回 mpeg；`per=4` 是最接近「海星」的轻快女声。
+- `dsh-go-tts/lib/index.js`：`rateToSpd()`（`+0%`→5，clamp 1–9）、`synthesizeFree()`；
+  `synthesize()` 在没有 Key 或 `voice === 'free'` 时走免费源；`queue()` 不再要求 Key。
+- 设置页音色改成下拉：免费兜底（默认）/ 晓爽 / 晓晓 / 晓伊 / 云希 / 云健 / 云夏 / 云扬；
+  默认 `voice = hasKey ? 晓爽 : 'free'`。
+- 本机实测免费链路：约 37KB mp3；手机实测点「读最新回复」后 **2 秒内** 创建 MediaPlayer（免费源比 Azure 快得多）。
+- 手机 0.3.2 一键装 job 成功（`2026-11-07T07:55:37Z` 同步），两个朗读胶囊正常。
+
 

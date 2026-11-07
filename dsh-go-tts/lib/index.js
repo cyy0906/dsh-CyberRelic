@@ -72,9 +72,41 @@ function cutText(text, limit) {
   return head
 }
 
+// 没填 Azure Key 时的免费兜底：百度翻译的朗读接口，不需要 key。
+// 它只有一个音色，优点是在国内直连能用；质量一般，填了 Key 就走 Azure。
+function rateToSpd(rate) {
+  const match = String(rate || '').match(/([+-]?\d+)\s*%/)
+  const pct = match ? Number(match[1]) : 0
+  const spd = Math.round(5 + pct / 20)
+  return Math.max(1, Math.min(9, spd))
+}
+
+async function synthesizeFree(text, config, signal) {
+  const spd = rateToSpd(config.rate)
+  // per=4 是女声（度丫丫一档），比默认男声更接近「海星」那种轻快甜一点的调子；
+  // 想换男声可以把 per 改成 1（实测 0/4 同一条女声、1/3 同一条男声）。
+  const url = `https://fanyi.baidu.com/gettts?lan=zh&text=${encodeURIComponent(text)}&spd=${spd}&per=4&source=web`
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+      Referer: 'https://fanyi.baidu.com/',
+    },
+    signal,
+  })
+  if (!response.ok) {
+    throw new Error(`免费朗读失败（HTTP ${response.status}）`)
+  }
+  const type = String(response.headers.get('content-type') || '')
+  if (!type.includes('audio')) {
+    throw new Error('免费朗读失败：接口没有返回音频')
+  }
+  return Buffer.from(await response.arrayBuffer())
+}
+
 async function synthesize(text, config, signal) {
-  if (!config.azureKey) {
-    throw new Error('还没配置 Azure key')
+  if (!config.azureKey || config.voice === 'free') {
+    return synthesizeFree(text, config, signal)
   }
   const ssml =
     `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="zh-CN">` +
@@ -235,7 +267,7 @@ export function apply(ctx) {
       const clean = forSpeech(text)
       if (clean === '') return { toast: zh ? '这里没有可念的文字' : 'Nothing to read' }
       const config = loadConfig()
-      if (!config.azureKey) return { toast: zh ? '还没配置 Azure key（config.json）' : 'Azure key is not configured' }
+      // 没填 Azure Key 就用免费兜底（百度朗读），不再拦下来。
       const budget = Math.min(config.maxChars, limit || config.maxChars)
       const trimmed = cutText(clean, budget)
       counter += 1

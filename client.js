@@ -95,6 +95,7 @@ window.__ModuleLoader__.load({
 .sf-check b { font-weight: 600; }
 .sf-check span { display: block; opacity: .6; font-size: 12px; }
 .sf-note { opacity: .62; line-height: 1.6; margin: 6px 0 0; }
+.sf-hint { opacity: .55; font-size: 12px; margin-top: 4px; line-height: 1.5; }
 .sf-warn { color: #e0a33a; }
 .sf-ok { color: #4fbf7a; }
 .sf-err { color: #e06a6a; }
@@ -162,7 +163,7 @@ window.__ModuleLoader__.load({
             hasKey: Boolean(config.tts?.hasKey),
             azureKey: '',
             azureRegion: config.tts?.azureRegion || 'eastasia',
-            ttsVoice: config.tts?.voice || 'zh-CN-XiaoshuangMultilingualNeural',
+            ttsVoice: config.tts?.voice || (config.tts?.hasKey ? 'zh-CN-XiaoshuangMultilingualNeural' : 'free'),
             ttsRate: config.tts?.rate || '+0%',
             ttsPitch: config.tts?.pitch || '+0Hz',
             ttsMaxChars: config.tts?.maxChars ?? 400,
@@ -647,11 +648,23 @@ window.__ModuleLoader__.load({
           h(
             Field,
             { label: '音色' },
-            h('input', {
-              className: 'sf-input',
-              value: form.ttsVoice,
-              onChange: (event) => setForm({ ...form, ttsVoice: event.target.value }),
-            }),
+            h(
+              'select',
+              {
+                className: 'sf-input sf-select',
+                value: form.ttsVoice,
+                onChange: (event) => setForm({ ...form, ttsVoice: event.target.value }),
+              },
+              h('option', { value: 'free' }, '免费兜底 · 百度女声（不用 Key）'),
+              h('option', { value: 'zh-CN-XiaoshuangMultilingualNeural' }, '晓爽 · 多语言（Azure，需 Key）'),
+              h('option', { value: 'zh-CN-XiaoxiaoNeural' }, '晓晓 · 女声（Azure，需 Key）'),
+              h('option', { value: 'zh-CN-XiaoyiNeural' }, '晓伊 · 女声（Azure，需 Key）'),
+              h('option', { value: 'zh-CN-YunxiNeural' }, '云希 · 男声（Azure，需 Key）'),
+              h('option', { value: 'zh-CN-YunjianNeural' }, '云健 · 男声（Azure，需 Key）'),
+              h('option', { value: 'zh-CN-YunxiaNeural' }, '云夏 · 少年（Azure，需 Key）'),
+              h('option', { value: 'zh-CN-YunyangNeural' }, '云扬 · 男声（Azure，需 Key）'),
+            ),
+            h('div', { className: 'sf-hint' }, '不填 Key 时自动用免费音色；填了 Key 才会走 Azure。'),
           ),
           h(
             Field,

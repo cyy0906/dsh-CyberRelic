@@ -242,3 +242,65 @@
 - 接口返回 `{ok,current,latest,hasUpdate,url,publishedAt,name,notes}`；有新版时面板给 Release 链接。
 - 测试新增 `test/update.test.js`（5 例：版本解析、比较、发现新版、同版本、404/网络错误），全套 **34 pass**。
 - 已知：仓库 Release 还停在 v0.2.8（git 暂停推送），所以本机现在点「检查更新」会显示「已是最新（v0.3.3）」。
+
+## v0.3.5 跨设备指令信箱（2026-11-27）
+
+主人要的东西一句话：**不想开手机也能让另一台机干活**。同步是「我推上去」，信箱是「我让它去做」。
+
+### 契约（写死在代码里）
+
+- 通道布局：`<remotePrefix>/mailbox/<deviceId>/{inbox.json,outbox.json}`（`remotePrefix` 默认 `dsh-sync-fish`）
+- 指令：`{ id, to, from, fromName, action, payload, createdAt, expiresAt, sig }`
+  - `id` 形如 `mb_<base36 时间戳>_<8 位 hex>`，正则 `^[A-Za-z0-9_:-]{1,80}$`
+  - `sig` = HMAC-SHA256(`stableStringify({v,id,to,from,action,createdAt,expiresAt,payload})`,
+    密钥 = HMAC-SHA256('dsh-sync-fish/mailbox/v1/hmac', passphrase))，64 位 hex，`timingSafeEqual` 比较。
+    **`fromName` 不在签名范围**（只是展示用，改它不算篡改）
+- 动作白名单 `ACTIONS = ['sync_now','set_scopes','read_config','list_sessions','run_tool']`；
+  `RUN_TOOL_ALLOW = ['sync_now','sync_status','sync_conflicts','mailbox_list','mailbox_result']`
+  —— 只放行本插件自己的只读工具，没有任意 shell、没有写文件、没有装插件
+- 回执：`{ id, action, status: 'ok'|'error', startedAt, finishedAt, result(≤8KB), error }`
+- 幂等：`state.mailbox.executedIds`（上限 500，`markExecuted` 去重后追加到末尾），
+  **先 `persist()` 再 `host.run()`**；失败/过期也记进去，不会每 60 秒重试
+- 上限：inbox 200 条、outbox 200 条、本地 `state.mailbox.results` 20 条、单条结果 8KB（按 UTF-8 字节，
+  退到字符边界，尾部 `…[truncated N bytes]` 也算进 8KB 预算——这里第一版超了，已修）
+
+### 文件
+
+| 文件 | 变化 |
+| --- | --- |
+| `lib/mailbox.js` | 新增（608 行）：路径/签名/指令校验/收发/幂等/`pollMailbox`/`resolveTarget`/`readManifestDevices`/`listSessions` |
+| `lib/state.js` | 重写：`loadState()` 补回 `base.pluginConfigs`（原来会被白名单丢掉，是个潜伏 bug）+ `mailbox:{executedIds,results,lastPollAt,lastError,lastPushAt}` |
+| `lib/config.js` | `mailbox: { enabled: true, ttlMinutes: 1440, pollSeconds: 60 }`；`loadConfig` 归一化（pollSeconds clamp 15–3600）；两条 warning（有信箱没口令 / TTL 太长）；`describeConfig().mailbox` |
+| `lib/engine.js` | `runSync` 多收 `pluginVersion`，写进快照；结果带 `deviceVersions:[{deviceId,deviceName,pluginVersion,updatedAt}]`（本机在前）——用来告诉各设备「谁还是 0.3.4，还没信箱」 |
+| `lib/index.js` | `runMailboxAction`（五个动作的唯一实现）、`pollMailboxOnce`（与同步互斥）、`deviceVersions`/`outdatedDevices`/`mailboxInfo`；三个工具；tick 里独立轮询；`sync_status`/设置页状态带 mailbox 段；`applyConfigPatch` 接 `mailbox`；`sync_setup` 加 `mailboxEnabled/mailboxTtlMinutes/mailboxPollSeconds` |
+| `test/mailbox.test.js` | 新增 16 例（内存通道） |
+| `test/plugin.test.js` | 工具数 5→8；新增「信箱工具发给自己能立刻执行」集成用例 |
+| `package.json` | 0.3.5；`check` 加 `lib/mailbox.js`；`test` 加 `test/mailbox.test.js` |
+| `README.md` | 新增「跨设备指令信箱（v0.3.5）」整节 + 通道目录树 + 配置示例 |
+
+### 两个坑（都是当场踩到的）
+
+1. **同步完立刻拉信箱会被自己的互斥挡回去**：`syncOnce` 里 `runtime.running` 要等 finally 才清，
+   所以 after-sync 那次 poll 用 `nodeSetTimeout(..., 2000)` 延迟起，`timer.unref?.()`。
+2. **`pollSeconds` 的下限其实是 60**：外层 `nodeSetInterval(tick, 60_000)` 是唯一节拍，
+   写小于 60 也只会在下一分钟跑；代码里 `Math.max(60, ...)` 明说了这事，别再被配置项骗。
+
+### 验证
+
+- 语法：`node --check` 全过（node = `F:\Users\Administrator\AppData\Local\Programs\DeepSeek Harness\resources\runtime\primary-runtime\dependencies\node\bin\node.exe`）
+- 测试：**51 pass 0 fail**（原来的 35 + 信箱 16，加上 plugin 里新加的那条）
+- 真通道（坚果云 WebDAV + 真实口令，临时 DSH_HOME + 专用设备 id `selftest-box-01`）：
+  投递 `mb_mwyyfts4_29e0851b` → 第一轮执行 1 条 ok（回执 175 字节，跑的是真的 `runSync` dryRun，读到 3 台设备）
+  → 第二轮跳过 `done`、执行次数仍为 1 → 测试用的 inbox/outbox 已从通道删掉。**链路通**。
+
+### 还没做的
+
+- **桌面端要重启宿主才会加载 0.3.5 的新工具**（ESM 缓存 + 插件实例是启动时建的）
+- **手机那台还是旧版**：它得升到 0.3.5 才有信箱，只能 `sync_phone` 一键装或手动装包；
+  `mailbox_list` 会把旧版设备列出来提醒
+- 升级顺序上有个坑：`mailbox_push` 给旧版设备投递会「投成功但永远不执行」。已加护栏——
+  对方快照里没有 `pluginVersion` 时返回 `warning`（照样投，因为升级后它可能会读；但那之前等于白投）
+- 真通道现状（2026-11-27 20:30 查）：manifest 里 4 台设备（次元月 = 本机 / 手机 / DESKTOP-9I70ELV / DESKTOP-3S77OLE）
+  **全都还没有 `pluginVersion`**，也就是说都还是 0.3.4 或更早——要等各自装到 0.3.5 并同步一轮
+- 设置页（`client.js`）没有信箱 UI——目前只能靠工具/agent 用；status 里已经有 `mailbox` 字段，以后要加卡片直接读
+- 没做 git commit（主人没让提交）；`lib/plugin-configs.js` 的 `reasoningeffort` 黑名单是之前就有的未提交改动，保留

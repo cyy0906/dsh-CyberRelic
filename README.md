@@ -109,6 +109,7 @@ sync_setup channel=folder root="D:\\Sync\\dsh" deviceName="手机"
   "remotePrefix": "dsh-sync-fish",
   "scopes": { "memory": true, "skills": true, "plugins": true, "tasks": true, "workspaces": false },
   "memory": { "injectExisting": true, "maxRecords": 5000 },
+  "mailbox": { "enabled": true, "ttlMinutes": 1440, "pollSeconds": 60 },
   "extraTargets": [],
   "phone": { "adbPath": "", "deviceName": "手机" }
 }
@@ -123,10 +124,72 @@ sync_setup channel=folder root="D:\\Sync\\dsh" deviceName="手机"
 <通道根>/dsh-sync-fish/
   manifest.json               # 各设备最后活跃时间、记忆/文件条数
   devices/<deviceId>.json     # 每台机一份完整快照（记忆 + 文件文本），可选加密
+  mailbox/<deviceId>/
+    inbox.json                # 别人发给这台机的指令（带签名、带有效期）
+    outbox.json               # 这台机执行完的回执
 ```
 
 只传文本文件；超过 2MB 的单个文件、超过 20MB 的总量会跳过并写进 `warnings`。
 第一次同步时，本机的每个会话库都会先在本地被合并（不需要远端存在）。
+
+## 跨设备指令信箱（v0.3.5）
+
+同步是「我推上去」，信箱是「我让它去做」。电脑上写一句话，手机上不用开 App、不用连 USB，
+它下次同步或 60 秒轮询时就把指令取走执行，结果写回自己的 `outbox.json`，这边再取回来。
+
+```
+你（电脑） → mailbox_push → 通道 mailbox/<手机id>/inbox.json
+手机轮询   → 验签 → 执行 → 通道 mailbox/<手机id>/outbox.json
+你（电脑） → mailbox_result(id) → 看到 ok / error 和它的返回值
+```
+
+三个工具：
+
+| 工具 | 干什么 |
+| --- | --- |
+| `mailbox_push(deviceId, action, payload, ttlMinutes)` | 投一条指令。`deviceId` 填设备名、设备 id 或 `self`（发给自己自测，会当场执行并把回执一起带回来） |
+| `mailbox_list()` | 本机待执行几条、最近回执、已执行条数，以及通道上**每台设备的版本**（谁还没升到 0.3.5，那就还没有信箱） |
+| `mailbox_result(id)` | 取回执，`id` 传 `latest` 取最近一条 |
+
+指令能做什么（就这五个，没有第六个）：
+
+| action | payload | 效果 |
+| --- | --- | --- |
+| `sync_now` | `{ dryRun?: boolean }` | 让那台机立刻跑一轮同步 |
+| `set_scopes` | `{ scopes: { memory, skills, plugins, pluginConfigs, tasks, workspaces } }` | 改它的同步分类开关（只认这六个键） |
+| `read_config` | — | 读它的脱敏配置（通道口令/密码不外传） |
+| `list_sessions` | `{ limit?: number }` | 列它的会话目录 |
+| `run_tool` | `{ name, args }` | 调它自己的只读工具，`name` 只能是 `sync_now` / `sync_status` / `sync_conflicts` / `mailbox_list` / `mailbox_result` |
+
+例：
+
+```
+mailbox_push(deviceId="手机", action="sync_now")
+mailbox_push(deviceId="手机", action="set_scopes", payload={scopes:{memory:true, skills:true}})
+mailbox_push(deviceId="手机", action="read_config")
+mailbox_push(deviceId="self", action="sync_now", payload={dryRun:true})   # 自测：当场出回执
+mailbox_result(id="latest")
+```
+
+几条规矩，都是写死在代码里的：
+
+- **签名**：指令用 `config.passphrase` 派生的 HMAC-SHA256 签，验不过直接丢，也不记进执行历史
+  （所以各设备的端到端口令必须一样；没设口令时信箱不工作，`sync_status` 会写着「开但没口令」）
+- **幂等**：`state.json` 的 `mailbox.executedIds` 记最近 500 条，**执行前先落盘**——
+  中途崩了最多是这条没回执，不会重复执行；失败的也算处理过，不会每 60 秒重试
+- **有效期**：默认 1440 分钟（`mailboxTtlMinutes` 可改），过期的不会执行，但会回一条 `error` 回执告诉你它过期了
+- **收件箱只增不删**：同一设备的 inbox 最多留 200 条，新的排前面；两台机同时往同一个 inbox 写是「后写覆盖」，
+  所以投递失败就重推一条新的（新 id）
+- **不开放的东西**：没有任意 shell、没有写文件、没有装插件。真要做重活，让那台设备上的人自己来
+- **总开关**：`sync_setup(mailboxEnabled=false)` 关掉信箱；同步总开关关着时信箱也不拉
+
+版本门槛：**两端都得是 v0.3.5**。老版本设备看不到 `mailbox/` 目录，也就当没这回事（不影响原来的同步）；
+`mailbox_list` 会把还是旧版的设备列出来，手机那台只能靠 `sync_phone` 或手动装包升级。
+`mailbox_push` 投递时如果对方版本未知（快照里没有 `pluginVersion`，说明它还没升上来），会照样投进去，
+但在返回值里给一条 `warning`：投了也不会执行，等它升级后再推一条新的（旧的那条会自己过期）。
+
+自测一遍（不碰真实数据）：发 `sync_now` + `dryRun:true` 给自己，看 `mailbox_result` 回 `ok`；
+再等一轮轮询，回执不会重复出现——那说明幂等生效了。
 
 ## 冲突怎么处理
 
@@ -184,15 +247,18 @@ DSH Go 的远程模式连的是电脑上的宿主，插件装在电脑侧即可�
 - 不同步会话历史（`~/.dsh/sessions`）—— 体积大、容易把别人的上下文带过来
 - 不同步凭据（`.credentials.yaml`）和 `config.json` 里的口令
 - 不合并 agent 预设 / 插件安装清单（宿主没有稳定的文件位置，版本一换就坏）
+- 信箱不执行任意命令：只有那五个动作，`run_tool` 也只放行本插件自己的只读工具
 
 ## 开发
 
 ```bash
-node --check lib/index.js && node --check client.js
-node --test test/sync.test.js test/plugin.test.js test/util.test.js test/config.test.js
+node --check lib/index.js && node --check lib/mailbox.js && node --check client.js
+node --test test/sync.test.js test/plugin.test.js test/util.test.js test/config.test.js \
+  test/plugin-configs.test.js test/mailbox.test.js test/update.test.js
 ```
 
 测试用两个临时目录模拟两台机（切换 `DSH_HOME`），不碰真实数据；手机安装包的 tar 也在测试里验证。
+信箱测试自带一个内存通道（`read/write/list/remove/ping` 与真实通道同接口），验签、投递、幂等、过期、越权都在里面跑。
 
 ## 兼容、归属与许可
 

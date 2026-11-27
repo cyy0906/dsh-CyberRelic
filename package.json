@@ -1,7 +1,7 @@
 {
   "name": "dsh-cyberrelic",
-  "version": "0.3.4",
-  "description": "Cross-device sync for DeepSeek Harness: fish memory (dsh-fish-memory), skills, plugin settings, scheduled tasks and the workspace registry. Folder + WebDAV channels, optional passphrase encryption (AES-256-GCM), record-level last-writer-wins merge with tombstones and conflict copies, a settings page, and one-click install to DSH Go over USB.",
+  "version": "0.3.5",
+  "description": "Cross-device sync for DeepSeek Harness: fish memory (dsh-fish-memory), skills, plugin settings, scheduled tasks and the workspace registry. Folder + WebDAV channels, optional passphrase encryption (AES-256-GCM), record-level last-writer-wins merge with tombstones and conflict copies, a signed cross-device command mailbox, a settings page, and one-click install to DSH Go over USB.",
   "author": {
     "name": "cyy0906",
     "url": "https://github.com/cyy0906"
@@ -30,8 +30,8 @@
     "dsh-go-tts/"
   ],
   "scripts": {
-    "check": "node --check lib/index.js && node --check client.js",
-    "test": "node --test test/sync.test.js test/plugin.test.js test/util.test.js test/config.test.js test/plugin-configs.test.js test/update.test.js"
+    "check": "node --check lib/index.js && node --check lib/mailbox.js && node --check client.js",
+    "test": "node --test test/sync.test.js test/plugin.test.js test/util.test.js test/config.test.js test/plugin-configs.test.js test/mailbox.test.js test/update.test.js"
   },
   "dsh": {
     "bundle": {
